@@ -13,7 +13,6 @@ pub fn subtract_rows_setting_column_to_zero<'a>(subtrahend: &'a mut [f32], minue
     }
 
     let multiplier = determine_how_much_to_multiply_by(subtrahend, minuend, column);
-    println!("The multiplier is: {}", multiplier);
 
     let mut minuend_column = 0;
     for subtrahend_column in subtrahend

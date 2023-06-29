@@ -1,4 +1,5 @@
 mod row_arithmetic;
+mod row_arithmetic_test;
 
 fn main() {
     let mut subtrahend = [5.0, 3.5, 9.0, 4.0];
