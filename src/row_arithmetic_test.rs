@@ -24,6 +24,7 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
     fn column_too_large() // Set tests to expect to panic - although maybe we should panic somewhere else
     {
         let mut subtrahend: [f32; 4] = [1.0, 0.0, 0.0, 0.0];
@@ -45,6 +46,7 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
     fn arrays_not_same_size()
     {
         let mut subtrahend: [f32; 4] = [1.0, 0.0, 0.0, 0.0];
