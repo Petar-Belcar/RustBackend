@@ -28,3 +28,20 @@ fn determine_how_much_to_multiply_by<'a>(subtrahend: &'a mut [f32], minuend: &'a
 {
     -(&subtrahend[column as usize] / &minuend[column as usize])
 }
+
+pub fn reduce_row_till_column_zero<'a>(row: &'a mut [f32], column: u32) -> Result<bool, String>
+{
+    if column as usize >= row.len() - 1
+    {
+        return Err(format!("The column which is to be set to 1 cannot be the last column or outside of the length of the row: [column = {}, row = {}]", column, row.len()));
+    }
+
+    let multiplier = 1.0 / &row[column as usize];
+
+    for number in row
+    {
+        *number = *number * multiplier;
+    }
+
+    Ok(true)
+}

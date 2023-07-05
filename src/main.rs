@@ -8,6 +8,12 @@ fn main() {
     match row_arithmetic::subtract_rows_setting_column_to_zero(&mut subtrahend, &minuend, 2)
     {
         Ok(_) => println!("{:?}", subtrahend),
-        Err(error) => println!("{}", error)
+        Err(error_text) => println!("{}", error_text)
+    };
+
+    match row_arithmetic::reduce_row_till_column_zero(&mut subtrahend, 0)
+    {
+        Ok(_) => println!("{:?}", subtrahend),
+        Err(error_text) => println!("{}", error_text),
     };
 }
