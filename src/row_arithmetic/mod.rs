@@ -1,3 +1,9 @@
+use std::fmt::Display;
+
+use serde::{Serialize, Deserialize};
+use serde_json;
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Row
 {
     pub a_ij: Vec<f32>,
@@ -12,9 +18,9 @@ pub struct LinearProgram
 
 impl Row
 {
-    pub fn new(json: String) -> Self
+    pub fn new(json: &String) -> Self
     {
-        todo!();
+        serde_json::from_str(&json).expect("Unable to convert from json string to struct")
     }
 
     pub fn reduce_row(&mut self, minuend: &Row, column: usize) -> Result<bool, String>
@@ -46,7 +52,7 @@ impl Row
         -(self.a_ij[column as usize] / minuend.a_ij[column as usize])
     }
 
-    pub fn reduce_row_till_column_zero(&mut self, column: u32) -> Result<bool, String>
+    pub fn reduce_row_till_column_one(&mut self, column: u32) -> Result<bool, String>
     {
         if column as usize >= self.a_ij.len() - 1
         {
@@ -60,6 +66,23 @@ impl Row
             *number = *number * multiplier;
         }
 
+        self.b_i = self.b_i * multiplier;
+
         Ok(true)
+    }
+}
+
+impl Display for Row
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Row: {:?}, Constant: {}", self.a_ij, self.b_i)
+    }
+}
+
+impl LinearProgram
+{
+    pub fn new(json: String) -> Self
+    {
+        todo!();
     }
 }
