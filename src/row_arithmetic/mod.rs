@@ -3,27 +3,29 @@ use std::fmt::Display;
 use serde::{Serialize, Deserialize};
 use serde_json;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Row
 {
     pub a_ij: Vec<f32>,
     pub b_i: f32
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct LinearProgram
 {
     pub tableau: Vec<Row>,
-    pub costs: Row
+    pub costs: Vec<f32>,
+    pub relative_costs: Row,
 }
 
 impl Row
 {
     pub fn new(json: &String) -> Self
     {
-        serde_json::from_str(&json).expect("Unable to convert from json string to struct")
+        serde_json::from_str(&json).expect("Unable to convert from json string to Row struct")
     }
 
-    pub fn reduce_row(&mut self, minuend: &Row, column: usize) -> Result<bool, String>
+    pub fn reduce_row(&mut self, minuend: Row, column: usize) -> Result<bool, String>
     {
         if self.a_ij.len() != minuend.a_ij.len()
         {
@@ -35,7 +37,7 @@ impl Row
             return Err(format!("Column cannot be outside of row: row length = {}, column = {}", self.a_ij.len(), column));
         }
 
-        let multiplier = self.determine_how_much_to_multiply_by(minuend, column);
+        let multiplier = self.determine_how_much_to_multiply_by(&minuend, column);
 
         let mut minuend_column = 0;
         for subtrahend_column in &mut self.a_ij
@@ -81,8 +83,15 @@ impl Display for Row
 
 impl LinearProgram
 {
-    pub fn new(json: String) -> Self
+    pub fn new(json: &String) -> Self
     {
-        todo!();
+        serde_json::from_str(&json).expect("Unable to convert from json string to LinearProgram struct")
+    }
+}
+
+impl Display for LinearProgram
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Tableau {:?}, Costs: {:?}, Relative costs: {}", self.tableau, self.costs, self.relative_costs)
     }
 }

@@ -3,7 +3,7 @@ mod row_arithmetic;
 
 pub fn run() -> Result<String, String>
 {
-    let path_to_row_file = String::from("example_row.json");
+    let path_to_row_file = String::from("example_linearProgram.json");
     let mut example_row = match File::open(&path_to_row_file)
     {
         Ok(file) => file,
@@ -17,11 +17,17 @@ pub fn run() -> Result<String, String>
         Err(_) => println!("File on location {} was not able to be read", path_to_row_file)
     }
 
-    let mut row = row_arithmetic::Row::new(&json_data);
+    let mut linear_program = row_arithmetic::LinearProgram::new(&json_data);
+    println!("{}", &linear_program);
 
-    println!("{}", &row);
+    {
+        let cloned_row : row_arithmetic::Row = linear_program.tableau[1].clone();
+        match linear_program.tableau[0].reduce_row(cloned_row, 0)
+        {
+            Ok(_) => println!("Row successfully reduced"),
+            Err(error_message) => return Err(error_message),
+        };
+    }
 
-    row.reduce_row_till_column_one(1).expect("Failed to reduce row till the column is set to 1");
-
-    Ok(format!("{:?}", row))
+    Ok(format!("{}", linear_program))
 }
