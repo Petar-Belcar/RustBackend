@@ -1,4 +1,4 @@
-use std::{fmt::Display};
+use std::fmt::Display;
 use serde::{Serialize, Deserialize};
 use serde_json;
 
@@ -18,6 +18,7 @@ pub struct LinearProgram
     pub solution: Vec<f32>
 }
 
+#[allow(dead_code)]
 impl Row
 {
     // this may not be a needed function
@@ -94,6 +95,7 @@ impl Display for Row
     }
 }
 
+#[allow(dead_code)]
 impl LinearProgram
 {
     // add logic here
@@ -314,7 +316,6 @@ fn find_first_row_with_positive_a(rows: &Vec<Row>, row: usize, divider_column: u
             return Ok(current_row);        
         }
     }
-
-    println!("We got to error");
+    
     Err(format!("The next column with positive number in column {} does not exist", row))
 }
