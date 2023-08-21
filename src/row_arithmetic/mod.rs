@@ -120,7 +120,7 @@ impl LinearProgram
             return Err(format!("The passed linear problem does not start with an identity"));
         }
 
-        if !linear_program.check_if_solution_is_fesable()
+        if !linear_program.check_if_solution_is_feasible()
         {
             return Err(format!("The passed solution is not feasible"));
         }
@@ -132,7 +132,7 @@ impl LinearProgram
 
         if !linear_program.check_if_b_and_solutions_are_same()
         {
-            return Err(format!("Vector b and solution do not aligne"));
+            return Err(format!("Vector b and solution do not align"));
         }
 
         linear_program.relative_costs = linear_program.calculate_costs();
@@ -211,7 +211,7 @@ impl LinearProgram
         starts_with_identity
     }
 
-    fn check_if_solution_is_fesable(&self) -> bool
+    fn check_if_solution_is_feasible(&self) -> bool
     {
         self.solution.iter().filter(|x| **x < 0.0).count() == 0
     }

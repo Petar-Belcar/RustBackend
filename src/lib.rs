@@ -30,7 +30,7 @@ pub fn run() -> Result<String, String>
     let divider_column = 5;
     match linear_program.find_lexicographically_lowest_row(divider_column)
     {
-        Ok(row) => println!("Lexicologicly lowest row with divider row {} is: {}", divider_column, row),
+        Ok(row) => println!("Lexicographic lowest row with divider row {} is: {}", divider_column, row),
         Err(error) => println!("{}", error)
     };
 
