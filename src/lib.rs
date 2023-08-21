@@ -17,7 +17,7 @@ pub fn run() -> Result<String, String>
         Err(_) => println!("File on location {} was not able to be read", path_to_row_file)
     }
 
-    let mut linear_program = row_arithmetic::LinearProgram::new(&json_data);
+    let mut linear_program = row_arithmetic::LinearProgram::new(&json_data)?;
     println!("{}", &linear_program);
 
     {

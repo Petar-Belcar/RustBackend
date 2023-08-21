@@ -1,2 +1,5 @@
 # Ignoring compiled files
 target
+
+# ignore notes
+todo.md

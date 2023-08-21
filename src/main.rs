@@ -3,8 +3,6 @@ use rust_backend::run;
 
 fn main()
 {
-    println!("Hello world");
-
     match run()
     {
         Ok(result) => println!("{}", result),
