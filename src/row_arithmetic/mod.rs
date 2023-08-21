@@ -1,5 +1,4 @@
-use std::{fmt::Display, thread::current};
-
+use std::{fmt::Display};
 use serde::{Serialize, Deserialize};
 use serde_json;
 
@@ -22,9 +21,9 @@ pub struct LinearProgram
 impl Row
 {
     // this may not be a needed function
-    pub fn new(json: &String) -> Self
+    pub fn new(cost_changes: Vec<f32>, total_cost: f32) -> Self
     {
-        serde_json::from_str(&json).expect("Unable to convert from json string to Row struct")
+        Row{a_ij: cost_changes, b_i: -total_cost}
     }
 
     pub fn reduce_row(&mut self, minuend: Row, column: usize) -> Result<bool, String>
@@ -39,12 +38,24 @@ impl Row
             return Err(format!("Column cannot be outside of row: row length = {}, column = {}", self.a_ij.len(), column));
         }
 
+        if minuend.a_ij[column] == 0.0
+        {
+            return Err(format!("Cannot reduce row by column if the minuend has a 0 in it"));
+        }
+
         let multiplier = self.determine_how_much_to_multiply_by(&minuend, column);
 
-        let mut minuend_column = 0;
-        for subtrahend_column in &mut self.a_ij
+        let mut minuend_column: usize = 0;
+        while minuend_column < self.a_ij.len()
         {
-            *subtrahend_column = *subtrahend_column + multiplier * minuend.a_ij[minuend_column as usize];
+            if minuend_column != column 
+            {
+                self.a_ij[minuend_column] += multiplier * minuend.a_ij[minuend_column];
+            }
+            else 
+            {
+                self.a_ij[minuend_column] = 0.0;
+            }
             minuend_column += 1;
         }
 
@@ -53,17 +64,17 @@ impl Row
 
     fn determine_how_much_to_multiply_by(&self, minuend: &Row, column: usize) -> f32
     {
-        -(self.a_ij[column as usize] / minuend.a_ij[column as usize])
+        -(self.a_ij[column] / minuend.a_ij[column])
     }
 
-    pub fn reduce_row_till_column_one(&mut self, column: u32) -> Result<bool, String>
+    pub fn reduce_row_till_column_one(&mut self, column: usize) -> Result<bool, String>
     {
-        if column as usize >= self.a_ij.len() - 1
+        if column >= self.a_ij.len() - 1
         {
             return Err(format!("The column which is to be set to 1 cannot be the last column or outside of the length of the row: [column = {}, row = {}]", column, self.a_ij.len()));
         }
 
-        let multiplier = 1.0 / &self.a_ij[column as usize];
+        let multiplier = 1.0 / &self.a_ij[column];
 
         for number in &mut self.a_ij
         {
@@ -124,7 +135,7 @@ impl LinearProgram
             return Err(format!("Vector b and solution do not aligne"));
         }
 
-        println!("{}", linear_program);
+        linear_program.relative_costs = linear_program.calculate_costs();
 
         Ok(linear_program)
     }
@@ -218,11 +229,49 @@ impl LinearProgram
             .filter(|(x, y)| *x == y).count() == self.tableau.len()
     }
 
-    fn calculate_costs(&self) -> Result<String, String>
+    fn calculate_costs(&mut self) -> Row
     {
-        
-        todo!();
+        Row::new(self.costs.iter().take(self.tableau.len()).map(|x| *x * 0.0)
+            .chain(self.costs.iter().skip(self.tableau.len()).map(|x| -*x)).collect()
+            , 0.0)      
     }
+
+    pub fn find_lexicographically_lowest_row(&self, divider_column: usize) -> Result<usize, String>
+    {
+        let rows: Vec<Row> = self.tableau.iter().map(|x| x.clone()).collect();
+
+        let mut current_lowest_row: usize = match find_first_row_with_positive_a(&rows, 0, divider_column)
+        {
+            Ok(number) => number,
+            Err(_) => return Err(format!("There does not exist a row with positive elements in column {}", divider_column))
+        };
+
+        let mut current_comparing_row: usize = match find_first_row_with_positive_a(&rows, current_lowest_row + 1, divider_column)
+        {
+            Ok(number) => number,
+            Err(_) => return Ok(current_lowest_row)
+        };
+
+        while current_comparing_row < self.tableau.len()
+        {
+            
+            let lexicographic_comparison = compare_lexicographic_value(&self.tableau[current_lowest_row], &self.tableau[current_comparing_row], 0,divider_column)?;
+
+            if lexicographic_comparison
+            {
+                current_lowest_row = current_comparing_row;
+            }
+            current_comparing_row = 
+            match find_first_row_with_positive_a(&rows, current_comparing_row + 1, divider_column)
+            {
+                Ok(number) => number,
+                Err(_) => return Ok(current_lowest_row)
+            };
+        }
+
+        Ok(current_lowest_row)
+    }
+
 }
 
 impl Display for LinearProgram
@@ -230,4 +279,42 @@ impl Display for LinearProgram
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Tableau {:?}, Costs: {:?}, Relative costs: {}, Solution: {:?}", self.tableau, self.costs, self.relative_costs, self.solution)
     }
+}
+
+fn compare_lexicographic_value(row_1: &Row, row_2: &Row, column: usize, divider_column: usize) -> Result<bool, String>
+{
+    if column >= row_1.a_ij.len()
+    {
+        Err(format!("Rows are linearly dependent"))
+    }
+    else 
+    {
+        if row_1.a_ij[column] / row_1.a_ij[divider_column] == row_2.a_ij[column] / row_2.a_ij[divider_column]
+        {
+            compare_lexicographic_value(row_1, row_2, column + 1, divider_column)
+        }
+        else 
+        {
+            Ok(row_1.a_ij[column] / row_1.a_ij[divider_column] > row_2.a_ij[column] / row_2.a_ij[divider_column])
+        }
+    }
+}
+
+fn find_first_row_with_positive_a(rows: &Vec<Row>, row: usize, divider_column: usize) -> Result<usize, String>
+{
+    let mut current_row: usize = row;
+    while current_row < rows.len()
+    {
+        if !(rows[current_row].a_ij[divider_column] > 0.0)
+        {
+            current_row += 1;
+        }
+        else
+        {
+            return Ok(current_row);        
+        }
+    }
+
+    println!("We got to error");
+    Err(format!("The next column with positive number in column {} does not exist", row))
 }

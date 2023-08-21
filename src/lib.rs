@@ -18,16 +18,21 @@ pub fn run() -> Result<String, String>
     }
 
     let mut linear_program = row_arithmetic::LinearProgram::new(&json_data)?;
-    println!("{}", &linear_program);
+    println!("{}", linear_program);
 
+    let cloned_row : row_arithmetic::Row = linear_program.tableau[0].clone();
+    match linear_program.tableau[2].reduce_row(cloned_row, 4)
     {
-        let cloned_row : row_arithmetic::Row = linear_program.tableau[1].clone();
-        match linear_program.tableau[0].reduce_row(cloned_row, 0)
-        {
-            Ok(_) => println!("Row successfully reduced"),
-            Err(error_message) => return Err(error_message),
-        };
-    }
+        Ok(_) => println!("Row successfully reduced"),
+        Err(error_message) => return Err(error_message),
+    };
+
+    let divider_column = 5;
+    match linear_program.find_lexicographically_lowest_row(divider_column)
+    {
+        Ok(row) => println!("Lexicologicly lowest row with divider row {} is: {}", divider_column, row),
+        Err(error) => println!("{}", error)
+    };
 
     Ok(format!("{}", linear_program))
 }
