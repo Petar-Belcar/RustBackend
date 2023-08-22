@@ -13,26 +13,20 @@ pub fn run() -> Result<String, String>
     let mut json_data = String::new();
     match example_row.read_to_string(&mut json_data)
     {
-        Ok(_) => println!("File on location {} read and stored\n{}", path_to_row_file, json_data),
+        Ok(_) => (),
         Err(_) => println!("File on location {} was not able to be read", path_to_row_file)
     }
 
     let mut linear_program = row_arithmetic::LinearProgram::new(&json_data)?;
     println!("{}", linear_program);
 
-    let cloned_row : row_arithmetic::Row = linear_program.tableau[0].clone();
-    match linear_program.tableau[2].reduce_row(cloned_row, 4)
+    match linear_program.preform_simplex()
     {
-        Ok(_) => println!("Row successfully reduced"),
-        Err(error_message) => return Err(error_message),
+        Ok(result) => println!("{}", result),
+        Err(error) => return Err(error)
     };
 
-    let divider_column = 5;
-    match linear_program.find_lexicographically_lowest_row(divider_column)
-    {
-        Ok(row) => println!("Lexicographic lowest row with divider row {} is: {}", divider_column, row),
-        Err(error) => println!("{}", error)
-    };
+    linear_program.set_solution()?;
 
-    Ok(format!("{}", linear_program))
+    Ok(format!("{}", linear_program.to_json()?))
 }

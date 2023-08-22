@@ -2,6 +2,13 @@ use std::fmt::Display;
 use serde::{Serialize, Deserialize};
 use serde_json;
 
+pub enum SimplexResult
+{
+    Unbound,
+    Finished,
+    IterationComplete
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Row
 {
@@ -18,6 +25,20 @@ pub struct LinearProgram
     pub solution: Vec<f32>
 }
 
+struct Position
+{
+    pub row: usize,
+    pub column: usize,
+}
+
+impl Position
+{
+    pub fn new(new_row: usize, new_column: usize) -> Self
+    {
+        Position { row: new_row, column: new_column }
+    }
+}
+
 #[allow(dead_code)]
 impl Row
 {
@@ -27,7 +48,7 @@ impl Row
         Row{a_ij: cost_changes, b_i: -total_cost}
     }
 
-    pub fn reduce_row(&mut self, minuend: Row, column: usize) -> Result<bool, String>
+    pub fn reduce_row(&mut self, minuend: &Row, column: usize) -> Result<bool, String>
     {
         if self.a_ij.len() != minuend.a_ij.len()
         {
@@ -60,6 +81,8 @@ impl Row
             minuend_column += 1;
         }
 
+        self.b_i += multiplier * minuend.b_i;
+
         Ok(true)
     }
 
@@ -70,7 +93,7 @@ impl Row
 
     pub fn reduce_row_till_column_one(&mut self, column: usize) -> Result<bool, String>
     {
-        if column >= self.a_ij.len() - 1
+        if column >= self.a_ij.len()
         {
             return Err(format!("The column which is to be set to 1 cannot be the last column or outside of the length of the row: [column = {}, row = {}]", column, self.a_ij.len()));
         }
@@ -81,6 +104,8 @@ impl Row
         {
             *number = *number * multiplier;
         }
+
+        self.a_ij[column] = 1.0;
 
         self.b_i = self.b_i * multiplier;
 
@@ -98,6 +123,14 @@ impl Display for Row
 #[allow(dead_code)]
 impl LinearProgram
 {
+    pub fn to_json(&self) -> Result<String, String>
+    {
+        match serde_json::to_string(self)
+        {
+            Ok(json) => Ok(json),
+            Err(error) => Err(format!("Error while serializing linear program: {}", error))
+        }
+    }
     // add logic here
     pub fn new(json: &String) -> Result<LinearProgram, String>
     {
@@ -234,7 +267,7 @@ impl LinearProgram
     fn calculate_costs(&mut self) -> Row
     {
         Row::new(self.costs.iter().take(self.tableau.len()).map(|x| *x * 0.0)
-            .chain(self.costs.iter().skip(self.tableau.len()).map(|x| -*x)).collect()
+            .chain(self.costs.iter().skip(self.tableau.len()).map(|x| *x)).collect()
             , 0.0)      
     }
 
@@ -257,7 +290,7 @@ impl LinearProgram
         while current_comparing_row < self.tableau.len()
         {
             
-            let lexicographic_comparison = compare_lexicographic_value(&self.tableau[current_lowest_row], &self.tableau[current_comparing_row], 0,divider_column)?;
+            let lexicographic_comparison = compare_lexicographic_value_start(&self.tableau[current_lowest_row], &self.tableau[current_comparing_row], divider_column)?;
 
             if lexicographic_comparison
             {
@@ -274,12 +307,140 @@ impl LinearProgram
         Ok(current_lowest_row)
     }
 
+    fn get_all_negative_cost_rows(&self) -> Vec<usize>
+    {
+        self.relative_costs.a_ij.iter().enumerate()
+            .filter(|(_, y)| **y< 0.0)
+            .map(|(x, _)| x).collect()
+    }
+
+    fn select_row_to_reduce_by(&self, negative_indices: &Vec<usize>) -> Result<(usize, usize), String>
+    {
+        for index in negative_indices
+        {
+            match self.find_lexicographically_lowest_row(*index)
+            {
+                Ok(row) => return Ok((row, *index)),
+                Err(_) => ()
+            };
+        }
+
+        Err(format!("No viable rows have been found"))
+    }
+
+    pub fn simplex_iteration(&mut self) -> Result<SimplexResult, String>
+    {
+        let negative_indices = self.get_all_negative_cost_rows();
+
+        if negative_indices.len() == 0
+        {
+            return Ok(SimplexResult::Finished);
+        }
+        else 
+        {
+            let (reduction_row, column) = match self.select_row_to_reduce_by(&negative_indices)
+            {
+                Ok(row_result) => row_result,
+                Err(_) => return Ok(SimplexResult::Unbound)
+            };
+
+            match self.tableau[reduction_row].reduce_row_till_column_one(column)
+            {
+                Ok(_) => (),
+                Err(error) => return Err(error),
+            };
+
+            let cloned_reduction_row = self.tableau[reduction_row].clone();
+
+            for row in self.tableau.iter_mut().enumerate()
+                .filter(|(x, _)| *x != reduction_row).map(|(_, y)| y)
+            {
+                match row.reduce_row(&cloned_reduction_row, column)
+                {
+                    Ok(_) => (),
+                    Err(error) => return Err(error),
+                };
+            }
+
+            self.relative_costs.reduce_row(&cloned_reduction_row, column)?;
+
+            Ok(SimplexResult::IterationComplete)
+        }
+    }
+
+    pub fn preform_simplex(&mut self) -> Result<String, String>
+    {
+        loop 
+        {
+            match self.simplex_iteration()?
+            {
+                SimplexResult::Finished => {return Ok(format!("Simplex method has concluded successfully"))},
+                SimplexResult::Unbound => return Err(format!("Linear program is unbound, the optimal cost is -infinity")),
+                SimplexResult::IterationComplete => ()
+            } 
+        }
+    }
+
+    pub fn set_solution(&mut self) -> Result<String, String>
+    {
+        for solution in &mut self.solution
+        {
+            *solution = 0.0;
+        }
+
+        for position in self.get_all_e_i()?
+        {
+            self.solution[position.column] = self.tableau[position.row].b_i;
+        }
+        
+        Ok(format!("Solution set successfully"))
+    }
+
+    fn get_all_e_i(&self) -> Result<Vec<Position>, String>
+    {
+        let mut positions: Vec<Position> = Vec::new();
+
+        for column_index in self.relative_costs.a_ij.iter()
+            .enumerate().filter(|(_, x)| **x == 0.0).map(|(index, _)| index)
+        {
+            for (row_index, row) in self.tableau.iter().enumerate()
+            {
+                if row.a_ij[column_index] == 1.0
+                {
+                    if positions.iter().filter(|x| x.column == column_index).count() == 0
+                    {
+                        positions.push(Position::new(row_index, column_index));
+                    }
+                    else 
+                    {
+                        return Err(format!("A given column with relative cost 0 cannot have more than 1 element greater than 0")); 
+                    }
+                }
+            }
+        }
+
+        Ok(positions)
+    }
+
 }
 
 impl Display for LinearProgram
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Tableau {:?}, Costs: {:?}, Relative costs: {}, Solution: {:?}", self.tableau, self.costs, self.relative_costs, self.solution)
+    }
+}
+
+// TODO b needs to be checked first
+fn compare_lexicographic_value_start(row_1: &Row, row_2: &Row, divider_column: usize) -> Result<bool, String>
+{
+    if row_1.b_i / row_1.a_ij[divider_column] == row_2.b_i / row_2.a_ij[divider_column]
+    {
+        compare_lexicographic_value(row_1, row_2, 0, divider_column)
+    }
+    else 
+    {
+        Ok(row_1.b_i / row_1.a_ij[divider_column] > row_2.b_i / row_2.a_ij[divider_column])
     }
 }
 
