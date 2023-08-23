@@ -10,7 +10,6 @@ fn hello_world() -> &'static str
     "Hello, world!"
 }
 
-
 #[post("/", data = "<linear_program_json>")]
 fn index(linear_program_json: Json<row_arithmetic::LinearProgram>) -> Json<String>
 {
