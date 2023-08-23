@@ -8,7 +8,7 @@ pub enum SimplexResult
 {
     Unbound,
     Finished,
-    IterationComplete
+    IterationComplete,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -143,35 +143,7 @@ impl LinearProgram
             Err(error) => return Err(format!("Error while parsing json string as object: {}", error))
         };
 
-        if !linear_program.check_row_length()?
-        {
-            return Err(format!("Json passed did not have the same length of rows"));
-        }
-
-        if !linear_program.check_if_rows_is_equal_or_greater_than_columns()
-        {
-            return Err(format!("The passed linear program has more columns than rows"))
-        }
-
-        if !linear_program.check_if_matrix_starts_with_identity()
-        {
-            return Err(format!("The passed linear problem does not start with an identity"));
-        }
-
-        if !linear_program.check_if_solution_is_feasible()
-        {
-            return Err(format!("The passed solution is not feasible"));
-        }
-
-        if !linear_program.check_if_the_first_m_are_basic()
-        {
-            return Err(format!("The passed solution is not basic or non-degenerate"));
-        }
-
-        if !linear_program.check_if_b_and_solutions_are_same()
-        {
-            return Err(format!("Vector b and solution do not align"));
-        }
+        perform_checks(&linear_program)?;
 
         linear_program.relative_costs = linear_program.calculate_costs();
 
@@ -267,7 +239,7 @@ impl LinearProgram
             .filter(|(x, y)| *x == y).count() == self.tableau.len()
     }
 
-    fn calculate_costs(&mut self) -> Row
+    pub fn calculate_costs(&mut self) -> Row
     {
         Row::new(self.costs.iter().take(self.tableau.len()).map(|x| *x * 0.0)
             .chain(self.costs.iter().skip(self.tableau.len()).map(|x| *x)).collect()
@@ -482,4 +454,39 @@ fn find_first_row_with_positive_a(rows: &Vec<Row>, row: usize, divider_column: u
     }
     
     Err(format!("The next column with positive number in column {} does not exist", row))
+}
+
+pub fn perform_checks(linear_program: &LinearProgram) -> Result<String, String>
+{
+    if !linear_program.check_row_length()?
+    {
+        return Err(format!("Json passed did not have the same length of rows"));
+    }
+
+    if !linear_program.check_if_rows_is_equal_or_greater_than_columns()
+    {
+        return Err(format!("The passed linear program has more columns than rows"))
+    }
+
+    if !linear_program.check_if_matrix_starts_with_identity()
+    {
+        return Err(format!("The passed linear problem does not start with an identity"));
+    }
+
+    if !linear_program.check_if_solution_is_feasible()
+    {
+        return Err(format!("The passed solution is not feasible"));
+    }
+
+    if !linear_program.check_if_the_first_m_are_basic()
+    {
+        return Err(format!("The passed solution is not basic or non-degenerate"));
+    }
+
+    if !linear_program.check_if_b_and_solutions_are_same()
+    {
+        return Err(format!("Vector b and solution do not align"));
+    }
+
+    Ok(format!("All checks passed"))
 }

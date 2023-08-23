@@ -1,8 +1,8 @@
 mod row_arithmetic;
 
-pub fn run(json_string: &String) -> Result<String, String>
+pub fn run(linear_program: &mut row_arithmetic::LinearProgram) -> Result<&mut row_arithmetic::LinearProgram, String>
 {
-    let mut linear_program = row_arithmetic::LinearProgram::new(json_string)?;
+    linear_program.relative_costs = linear_program.calculate_costs();
 
     match linear_program.preform_simplex()
     {
@@ -10,7 +10,11 @@ pub fn run(json_string: &String) -> Result<String, String>
         Err(error) => return Err(error)
     };
 
-    linear_program.set_solution()?;
+    match linear_program.set_solution()
+    {
+        Ok(_) => (),
+        Err(error) => return Err(error)
+    }
 
-    Ok(format!("{}", linear_program.to_json()?))
+    Ok(linear_program)
 }
