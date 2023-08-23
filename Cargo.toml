@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 serde = {version = "1.0", features = ["derive"]}
 serde_json = "1.0"
+rocket = {git = "https://github.com/SergioBenitez/Rocket", rev = "ddeac5ddcf252d081d69f1b1cec8467ab9ec4d26" , features = ["json"]}

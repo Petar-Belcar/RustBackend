@@ -1,6 +1,8 @@
 use std::fmt::Display;
-use serde::{Serialize, Deserialize};
+// use serde::{Serialize, Deserialize};
+use rocket::serde::{Deserialize, Serialize};
 use serde_json;
+
 
 pub enum SimplexResult
 {
@@ -17,6 +19,7 @@ pub struct Row
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(crate = "rocket::serde")]
 pub struct LinearProgram
 {
     pub tableau: Vec<Row>,
