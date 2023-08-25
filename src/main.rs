@@ -79,11 +79,18 @@ fn index(linear_program: Json<row_arithmetic::LinearProgram>) -> Json<LinearProg
     Json(LinearProgramResponse::LinearProgram(response_row))
 }
 
+#[catch(400)]
+fn parsing_error(_request: &rocket::Request) -> Json<LinearProgramResponse>
+{
+    Json(LinearProgramResponse::Error(String::from("Failed to process JSON")))
+}
+
 #[launch]
 fn rocket() -> _
 {
     rocket::build()
         .mount("/", routes![index, hello_world, options])
+        .register("/", catchers![parsing_error])
         .attach(CORS)
     
 }
