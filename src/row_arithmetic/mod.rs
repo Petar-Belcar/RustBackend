@@ -242,7 +242,7 @@ impl LinearProgram
     pub fn calculate_costs(&mut self) -> Row
     {
         Row::new(self.costs.iter().take(self.tableau.len()).map(|x| *x * 0.0)
-            .chain(self.costs.iter().skip(self.tableau.len()).map(|x| *x)).collect()
+            .chain(self.costs.iter().skip(self.tableau.len()).map(|x| -*x)).collect()
             , 0.0)      
     }
 
