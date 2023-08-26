@@ -9,6 +9,7 @@ pub enum SimplexResult
     Unbound,
     Finished,
     IterationComplete,
+    Error(String)
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -228,13 +229,13 @@ impl LinearProgram
     
     fn check_if_the_first_m_are_basic(&self) -> bool
     {
-        self.solution.iter().take(self.tableau.len()).filter(|x| **x > 0.0).count() == self.tableau.len() && 
+        self.solution.iter().take(self.tableau.len()).count() == self.tableau.len() && 
         self.solution.iter().skip(self.tableau.len()).filter(|x| **x > 0.0).count() == 0
     }
 
     fn check_if_b_and_solutions_are_same(&self) -> bool
     {
-        self.solution.iter().take(self.tableau.len()).filter(|x| **x > 0.0)
+        self.solution.iter().take(self.tableau.len())
             .zip(self.tableau.iter().map(|x| x.b_i))
             .filter(|(x, y)| *x == y).count() == self.tableau.len()
     }
@@ -303,26 +304,26 @@ impl LinearProgram
         Err(format!("No viable rows have been found"))
     }
 
-    pub fn simplex_iteration(&mut self) -> Result<SimplexResult, String>
+    pub fn simplex_iteration(&mut self) -> SimplexResult
     {
         let negative_indices = self.get_all_negative_cost_rows();
 
         if negative_indices.len() == 0
         {
-            return Ok(SimplexResult::Finished);
+            return SimplexResult::Finished;
         }
         else 
         {
             let (reduction_row, column) = match self.select_row_to_reduce_by(&negative_indices)
             {
                 Ok(row_result) => row_result,
-                Err(_) => return Ok(SimplexResult::Unbound)
+                Err(_) => return SimplexResult::Unbound
             };
 
             match self.tableau[reduction_row].reduce_row_till_column_one(column)
             {
                 Ok(_) => (),
-                Err(error) => return Err(error),
+                Err(error) => return SimplexResult::Error(error),
             };
 
             let cloned_reduction_row = self.tableau[reduction_row].clone();
@@ -333,25 +334,30 @@ impl LinearProgram
                 match row.reduce_row(&cloned_reduction_row, column)
                 {
                     Ok(_) => (),
-                    Err(error) => return Err(error),
+                    Err(error) => return SimplexResult::Error(error),
                 };
             }
 
-            self.relative_costs.reduce_row(&cloned_reduction_row, column)?;
+            match self.relative_costs.reduce_row(&cloned_reduction_row, column)
+            {
+                Ok(_) => (),
+                Err(error) => return SimplexResult::Error(error),
+            };
 
-            Ok(SimplexResult::IterationComplete)
+            SimplexResult::IterationComplete
         }
     }
 
-    pub fn preform_simplex(&mut self) -> Result<String, String>
+    pub fn preform_simplex(&mut self) -> SimplexResult
     {
         loop 
         {
-            match self.simplex_iteration()?
+            match self.simplex_iteration()
             {
-                SimplexResult::Finished => {return Ok(format!("Simplex method has concluded successfully"))},
-                SimplexResult::Unbound => return Err(format!("Linear program is unbound, the optimal cost is -infinity")),
-                SimplexResult::IterationComplete => ()
+                SimplexResult::Finished => return SimplexResult::Finished,
+                SimplexResult::Unbound => return SimplexResult::Unbound,
+                SimplexResult::IterationComplete => (),
+                SimplexResult::Error(error) => return SimplexResult::Error(error)
             } 
         }
     }

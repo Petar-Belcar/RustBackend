@@ -46,6 +46,7 @@ fn options() -> Json<String>
 enum LinearProgramResponse
 {
     LinearProgram(row_arithmetic::Row),
+    Unbound(String),
     Error(String)
 }
 
@@ -64,8 +65,10 @@ fn index(linear_program: Json<row_arithmetic::LinearProgram>) -> Json<LinearProg
 
     match linear_program.preform_simplex()
     {
-        Ok(_) => (),
-        Err(error) => return Json(LinearProgramResponse::Error(error))
+        row_arithmetic::SimplexResult::Finished => (),
+        row_arithmetic::SimplexResult::Unbound => return Json(LinearProgramResponse::Unbound(format!("Problem is unbound and the optimal solution is infinity"))),
+        row_arithmetic::SimplexResult::IterationComplete => return Json(LinearProgramResponse::Error(format!("Iteration complete, you should never get this though"))),
+        row_arithmetic::SimplexResult::Error(error) => return Json(LinearProgramResponse::Error(error))
     };
 
     match linear_program.set_solution()
