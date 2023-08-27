@@ -1,7 +1,7 @@
 use std::fmt::Display;
 // use serde::{Serialize, Deserialize};
 use rocket::serde::{Deserialize, Serialize};
-use serde_json;
+// use serde_json;
 
 
 pub enum SimplexResult
@@ -127,29 +127,29 @@ impl Display for Row
 #[allow(dead_code)]
 impl LinearProgram
 {
-    pub fn to_json(&self) -> Result<String, String>
-    {
-        match serde_json::to_string(self)
-        {
-            Ok(json) => Ok(json),
-            Err(error) => Err(format!("Error while serializing linear program: {}", error))
-        }
-    }
-    // add logic here
-    pub fn new(json: &String) -> Result<LinearProgram, String>
-    {
-        let mut linear_program : LinearProgram = match serde_json::from_str(&json)
-        {
-            Ok(program) => program,
-            Err(error) => return Err(format!("Error while parsing json string as object: {}", error))
-        };
+    // pub fn to_json(&self) -> Result<String, String>
+    // {
+    //     match serde_json::to_string(self)
+    //     {
+    //         Ok(json) => Ok(json),
+    //         Err(error) => Err(format!("Error while serializing linear program: {}", error))
+    //     }
+    // }
+    // // add logic here
+    // pub fn new(json: &String) -> Result<LinearProgram, String>
+    // {
+    //     let mut linear_program : LinearProgram = match serde_json::from_str(&json)
+    //     {
+    //         Ok(program) => program,
+    //         Err(error) => return Err(format!("Error while parsing json string as object: {}", error))
+    //     };
 
-        perform_checks(&linear_program)?;
+    //     perform_checks(&linear_program)?;
 
-        linear_program.relative_costs = linear_program.calculate_costs();
+    //     linear_program.relative_costs = linear_program.calculate_costs();
 
-        Ok(linear_program)
-    }
+    //     Ok(linear_program)
+    // }
 
     fn check_row_length (&self) -> Result<bool, String>
     {
