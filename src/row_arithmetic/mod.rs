@@ -304,7 +304,7 @@ impl LinearProgram
         Err(format!("No viable rows have been found"))
     }
 
-    pub fn simplex_iteration(&mut self) -> SimplexResult
+    fn simplex_iteration(&mut self) -> SimplexResult
     {
         let negative_indices = self.get_all_negative_cost_rows();
 
