@@ -155,8 +155,7 @@ impl LinearProgram
     {
         let mut first_row_length: Option<usize> = None;
         let mut same_length = true;
-        for length in self.tableau.iter()
-                                                        .map(|row| row.a_ij.len())
+        for length in self.tableau.iter().map(|row| row.a_ij.len())
         {
             match first_row_length
             {
@@ -240,11 +239,12 @@ impl LinearProgram
             .filter(|(x, y)| *x == y).count() == self.tableau.len()
     }
 
-    pub fn calculate_costs(&mut self) -> Row
+    pub fn calculate_costs(&self) -> Row
     {
+        let total_cost = self.costs.iter().zip(self.solution.iter()).map(|(x, y)| *x * *y).sum();
         Row::new(self.costs.iter().take(self.tableau.len()).map(|x| *x * 0.0)
-            .chain(self.costs.iter().skip(self.tableau.len()).map(|x| -*x)).collect()
-            , 0.0)      
+            .chain(self.costs.iter().skip(self.tableau.len()).map(|x| -*x + total_cost)).collect()
+            , total_cost)      
     }
 
     pub fn find_lexicographically_lowest_row(&self, divider_column: usize) -> Result<usize, String>
