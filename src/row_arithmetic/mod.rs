@@ -136,20 +136,20 @@ impl LinearProgram
     //     }
     // }
     // // add logic here
-    // pub fn new(json: &String) -> Result<LinearProgram, String>
-    // {
-    //     let mut linear_program : LinearProgram = match serde_json::from_str(&json)
-    //     {
-    //         Ok(program) => program,
-    //         Err(error) => return Err(format!("Error while parsing json string as object: {}", error))
-    //     };
+    pub fn new(json: &String) -> Result<LinearProgram, String>
+    {
+        let mut linear_program : LinearProgram = match serde_json::from_str(&json)
+        {
+            Ok(program) => program,
+            Err(error) => return Err(format!("Error while parsing json string as object: {}", error))
+        };
 
-    //     perform_checks(&linear_program)?;
+        perform_checks(&linear_program)?;
 
-    //     linear_program.relative_costs = linear_program.calculate_costs();
+        linear_program.relative_costs = linear_program.calculate_costs();
 
-    //     Ok(linear_program)
-    // }
+        Ok(linear_program)
+    }
 
     fn check_row_length (&self) -> Result<bool, String>
     {
@@ -185,7 +185,7 @@ impl LinearProgram
         Ok(same_length)
     }
 
-    fn check_if_rows_is_equal_or_greater_than_columns(&self) -> bool
+    fn check_if_rows_is_greater_than_columns(&self) -> bool
     {
         self.tableau.len() <= self.tableau[0].a_ij.len()
     }
@@ -469,7 +469,7 @@ pub fn perform_checks(linear_program: &LinearProgram) -> Result<String, String>
         return Err(format!("Json passed did not have the same length of rows"));
     }
 
-    if !linear_program.check_if_rows_is_equal_or_greater_than_columns()
+    if !linear_program.check_if_rows_is_greater_than_columns()
     {
         return Err(format!("The passed linear program has more columns than rows"))
     }
