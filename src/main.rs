@@ -1,6 +1,6 @@
 #[macro_use] extern crate rocket;
 
-mod row_arithmetic;
+pub mod row_arithmetic;
 // use rust_backend::run;
 use rocket::serde::json::Json;
 use serde::Serialize;
@@ -8,6 +8,8 @@ use serde::Serialize;
 use rocket::http::Header;
 use rocket::{Request, Response};
 use rocket::fairing::{Fairing, Info, Kind};
+
+mod simplex_test;
 
 // This bit I don't really understand
 pub struct CORS;
