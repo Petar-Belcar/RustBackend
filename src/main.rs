@@ -45,7 +45,7 @@ fn options() -> Json<String>
 }
 
 #[derive(Serialize)]
-enum LinearProgramResponse
+pub enum LinearProgramResponse
 {
     LinearProgram(row_arithmetic::Row),
     Unbound(String),
