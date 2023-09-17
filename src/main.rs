@@ -1,6 +1,9 @@
 #[macro_use] extern crate rocket;
 
 pub mod row_arithmetic;
+pub mod solve_linear_equations;
+use std::collections::HashMap;
+
 // use rust_backend::run;
 use rocket::serde::json::Json;
 use serde::Serialize;
@@ -84,6 +87,20 @@ fn index(linear_program: Json<row_arithmetic::LinearProgram>) -> Json<LinearProg
     Json(LinearProgramResponse::LinearProgram(response_row))
 }
 
+#[post("/", data = "<linear_equation>")]
+fn linear_program(linear_equation: Json<solve_linear_equations::LinearSystem>) -> Json<String>
+{
+    let mut linear_equation = linear_equation.into_inner();
+    linear_equation.solution = Some(HashMap::new());
+
+    match linear_equation.determine_column_and_row()
+    {
+        solve_linear_equations::RowColumnResult::Found((row_index, column_index)) => Json(format!("Row: {} Column: {}", row_index, column_index)),
+        solve_linear_equations::RowColumnResult::NotFound =>  Json(format!("Row and column to reduce by not found")),
+        solve_linear_equations::RowColumnResult::NoSolution => Json(format!("Solution not found on linear program"))
+    }
+}
+
 #[catch(400)]
 fn parsing_error(_request: &rocket::Request) -> Json<LinearProgramResponse>
 {
@@ -95,6 +112,7 @@ fn rocket() -> _
 {
     rocket::build()
         .mount("/", routes![index, hello_world, options])
+        .mount("/linear_equation", routes![linear_program])
         .register("/", catchers![parsing_error])
         .attach(CORS)
     
