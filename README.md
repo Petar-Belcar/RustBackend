@@ -24,7 +24,6 @@ b_i \\
 \vdots \\
 b_m
 \end{bmatrix} \\
-
 a_{ij}, b_i \in \mathbb{R} , \quad \forall i,j \\
 b_i \geq 0, \quad \forall i\\
 i \geq j
