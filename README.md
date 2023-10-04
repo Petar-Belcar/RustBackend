@@ -27,8 +27,8 @@ b_m
 $$
 
 $$
-a_{ij}, b_i \in \mathbb{R} , \quad \forall i,j \\
-b_i \geq 0, \quad \forall i\\
+a_{ij}, b_i \in \mathbb{R} , \quad \forall i,j \quad\\
+b_i \geq 0, \quad \forall i \quad\\
 i \geq j
 $$
 
