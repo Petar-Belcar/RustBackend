@@ -2,7 +2,6 @@
 
 pub mod row_arithmetic;
 pub mod solve_linear_equations;
-use std::collections::HashMap;
 
 // use rust_backend::run;
 use rocket::serde::json::Json;
@@ -98,7 +97,6 @@ enum LinearEquationResult
 fn linear_program(linear_equation: Json<solve_linear_equations::LinearSystem>) -> Json<LinearEquationResult>
 {
     let mut linear_equation = linear_equation.into_inner();
-    linear_equation.solution = Some(HashMap::new());
 
     match linear_equation.solve_system_of_linear_equations()
     {

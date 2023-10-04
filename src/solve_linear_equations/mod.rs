@@ -4,11 +4,10 @@ use serde::{Serialize, Deserialize};
 
 use crate::row_arithmetic;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct LinearSystem
 {
     pub equations: Vec<row_arithmetic::Row>,
-    pub solution: Option<HashMap<(usize, usize), f32>> // The first is row, second is column
 }
 
 pub enum RowColumnResult
@@ -21,7 +20,7 @@ impl LinearSystem
 {
     pub fn new(equations: Vec<row_arithmetic::Row>) -> Self
     {
-        LinearSystem {equations, solution: Some(HashMap::new())}
+        LinearSystem {equations}
     }
 
     // Assume here that the number of equations is lesser than or equal to the number of variables
