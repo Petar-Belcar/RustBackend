@@ -44,7 +44,7 @@ impl LinearSystem
 
                     solution_map.insert((row, column), self.equations[row].b_i);
                 },
-                RowColumnResult::NotFound => return Err(format!("Linear set of equations does not have enough")),
+                RowColumnResult::NotFound => return Err(format!("Linear set of equations cannot be turned into reduced row echelon form")),
 
             }
         }
