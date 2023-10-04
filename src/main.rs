@@ -87,17 +87,23 @@ fn index(linear_program: Json<row_arithmetic::LinearProgram>) -> Json<LinearProg
     Json(LinearProgramResponse::LinearProgram(response_row))
 }
 
+#[derive(Serialize)]
+enum LinearEquationResult
+{
+    LinearEquation(solve_linear_equations::LinearSystem),
+    Err(String)
+}
+
 #[post("/", data = "<linear_equation>")]
-fn linear_program(linear_equation: Json<solve_linear_equations::LinearSystem>) -> Json<String>
+fn linear_program(linear_equation: Json<solve_linear_equations::LinearSystem>) -> Json<LinearEquationResult>
 {
     let mut linear_equation = linear_equation.into_inner();
     linear_equation.solution = Some(HashMap::new());
 
-    match linear_equation.determine_column_and_row()
+    match linear_equation.solve_system_of_linear_equations()
     {
-        solve_linear_equations::RowColumnResult::Found((row_index, column_index)) => Json(format!("Row: {} Column: {}", row_index, column_index)),
-        solve_linear_equations::RowColumnResult::NotFound =>  Json(format!("Row and column to reduce by not found")),
-        solve_linear_equations::RowColumnResult::NoSolution => Json(format!("Solution not found on linear program"))
+        Ok(_) => Json(LinearEquationResult::LinearEquation(linear_equation)),
+        Err(error) => Json(LinearEquationResult::Err(error)),
     }
 }
 
